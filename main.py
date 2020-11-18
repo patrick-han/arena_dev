@@ -5,53 +5,46 @@ import arena
 def scene_callback(msg):
     print("scene_callback: ", msg)
 
-def arena_init(temp_hum_readings):
+def arena_init():
     arena.init("arena.andrew.cmu.edu", "realm", "patrick_scene", scene_callback)
-    deg = "0"
-    hum = "0"
-    text = arena.Object(
-        objName = "text_1",
+
+    temperature_text = arena.Object(
+        objName = "temperature_text",
         objType = arena.Shape.text,
         color = (255, 0, 0),
         location = (-1, 2, -3),
-        text = "Hello world! It's currently " + deg + " degrees with a humidity of: " + hum
+        text = "Hello world! The temperature is: 0"
     )
-    time.sleep(5)
-    for pair in temp_hum_readings:
-        text.update(text = "Hello world! It's currently " + pair[0] + " degrees with a humidity of: " + pair[1])
-        time.sleep(1)
-    # text.update(text = "Based")
-
+    humidity_text = arena.Object(
+        objName="humidity_text",
+        objType=arena.Shape.text,
+        color=(255, 0, 0),
+        location=(-1, 1, -3),
+        text="Hello world! The humidity is: 0"
+    )
+    start_serial(temperature_text, humidity_text)
     arena.handle_events()
 
 
-def start_serial():
+def start_serial(temperature_text_obj, humidity_text_obj):
     # set up the serial line
     ser = serial.Serial('COM6', 9600)
     time.sleep(2)
 
-    # Read and record the data
-    temperature_readings = []
-    humidity_readings = []
-    for i in range(15):
-        b = ser.readline()  # read a byte string
-        string_n = b.decode()  # decode byte string into Unicode
-        string = string_n.rstrip()  # remove \n and \r
-
+    while (True):
+        b = ser.readline()
+        string_n = b.decode()
+        string = string_n.rstrip()
         if (string):
-            # print(string)
             if (string[0] == "T"):
-                temperature_readings.append(string)
+                temperature_text_obj.update(text = "The temperature is: " + string)
             elif (string[0] == "H"):
-                humidity_readings.append(string)
+                humidity_text_obj.update(text = "The humidity is: " + string)
+            print(string)
 
-        time.sleep(0.1)  # wait (sleep) 0.1 seconds
+        time.sleep(0.1)
 
     ser.close()
 
-    return zip(temperature_readings, humidity_readings)
-
 if __name__ == '__main__':
-    readings = start_serial()
-    arena_init(readings)
-
+    arena_init()
